@@ -39,7 +39,7 @@ class IfcService {
   async initializeWebIfc(): Promise<void> {
     try {
       this.ifcApi = new IfcAPI();
-      this.ifcApi.SetWasmPath("/wasm/");
+      this.ifcApi.SetWasmPath("./assets/");
       await this.ifcApi.Init();
       this.isWebIfcInitialized = true;
     } catch {

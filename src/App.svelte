@@ -45,5 +45,5 @@
 {:else if isLoading} 
   <Spinner />
 {:else}
-  <JsonView {json} depth={1} />
+  <JsonView {json} depth={0} />
 {/if}

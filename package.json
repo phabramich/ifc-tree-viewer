@@ -1,18 +1,23 @@
 {
   "name": "ifc-tree-view",
-  "private": true,
-  "version": "0.0.0",
+  "private": false,
+  "version": "0.0.1",
   "type": "module",
+  "homepage": "/ifc-tree-viewer/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.0.4",
     "@tsconfig/svelte": "^4.0.1",
     "autoprefixer": "^10.4.14",
+    "gh-pages": "^5.0.0",
     "postcss": "^8.4.23",
     "postcss-load-config": "^4.0.1",
     "svelte": "^3.58.0",
