@@ -110,13 +110,11 @@
     background-color: lavender;
   }
   :global(div.bx--grid) {
-    margin-left: 0;
-    margin-right: 0;
     padding-left: 1rem;
     padding-right: 1rem;
   }
   :global(div.bx--col) {
-    max-width: 50%;
+    max-width: 63%;
     overflow: auto;
   }
 </style>
