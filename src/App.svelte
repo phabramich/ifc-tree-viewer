@@ -1,49 +1,122 @@
 <script lang="ts">
-  import { JsonView } from "@zerodevx/svelte-json-view";
-  import { Dropzone, Spinner } from 'flowbite-svelte'
-  import loadIfc from "./ifc-load";
+  import { TreeView, Grid, Row, Column } from "carbon-components-svelte";
+  import { FileUploaderDropContainer } from "carbon-components-svelte";
+
+  import loadIfc, { loadObjectData, objectDataToTreeNodes } from "./ifc-load";
+  import type { TreeNode } from "carbon-components-svelte/types/TreeView/TreeView.svelte";
+  import { Loading } from "carbon-components-svelte";
 
   // Sets up the IFC loading
   let isFileLoaded = false;
-  let json: Record<string, any> = {};
   let isLoading = false;
+  let modelId: number | undefined;
+  let objectsTree: TreeNode[] | undefined;
 
-  const dropHandle = (event) => { 
-    event.preventDefault(); 
-    const files = event.dataTransfer.files; 
+  let currentlySelectedObjectData: TreeNode[] | undefined;
+
+  let activeId: string = "";
+  let selectedIds: string[] = [];
+  let selectedName: string = "";
+
+  const handleFiles = (files: File[]): void => {
     if (files.length > 0) {
       isLoading = true;
-      handleIfcLoading(files[0])
+      handleIfcLoading(files[0]);
     }
-  }
+  };
 
-  const handleChange = (event) => {
-    const files = event.target.files; 
-    if (files.length > 0) {
-      isLoading = true;
-      handleIfcLoading(files[0])
-    }
-  }
+  const handleChange = (event: CustomEvent): void => {
+    console.log(event);
+    const files = event.detail;
+    handleFiles(files);
+  };
+
+  const onConstructionElementSelect = (node: TreeNode): void => {
+    const { id: expressId, text } = node;
+    selectedName = text;
+    const objData = loadObjectData(modelId, Number(expressId));
+    currentlySelectedObjectData = objectDataToTreeNodes(objData);
+  };
 
   const handleIfcLoading = async (file: File): Promise<void> => {
-    json = await loadIfc(file);
-    isLoading = false;
+    const [objTree, mdId] = await loadIfc(file);
+    objectsTree = objTree;
+    modelId = mdId;
     isFileLoaded = true;
-    console.log(json) // this also allows to view the IFC in the console
-  }
+    isLoading = false;
+    console.log(objectsTree); // this also allows to view the IFC in the console
+  };
 </script>
 
-{#if !isFileLoaded}
-  <Dropzone id='dropzone' 
-  on:drop={dropHandle} 
-  on:dragover={(event) => { event.preventDefault() }}
-  on:change={handleChange}
-  >
-  <svg aria-hidden="true" class="mb-3 w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-  <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Click to upload IFC file</span> or drag and drop</p>
-</Dropzone>
-{:else if isLoading} 
-  <Spinner />
-{:else}
-  <JsonView {json} depth={0} />
-{/if}
+<div class="page-wrapper">
+  {#if !isFileLoaded}
+    <FileUploaderDropContainer
+      labelText="Click or drag and drop to upload IFC file"
+      validateFiles={(files) => {
+        return files.filter((file) => file.name.endsWith(".ifc"));
+      }}
+      on:change={handleChange}
+    >
+    </FileUploaderDropContainer>
+  {:else if isLoading}
+    <Loading />
+  {:else}
+    <Grid>
+      <Row>
+        <Column class="left-side">
+          <TreeView
+            children={objectsTree}
+            labelText="File hierarchy"
+            bind:activeId
+            bind:selectedIds
+            on:select={({ detail }) => onConstructionElementSelect(detail)}
+          />
+        </Column>
+        <Column class="right-side">
+          <TreeView
+            children={currentlySelectedObjectData}
+            labelText={selectedName}
+          />
+        </Column>
+      </Row>
+    </Grid>
+  {/if}
+</div>
+
+<style>
+  .page-wrapper {
+    margin: 2rem;
+    position: relative;
+    overflow-y: auto;
+  }
+  :global(label.bx--file-browse-btn) {
+    max-width: 100%;
+    color: rgb(140, 140, 140);
+  }
+  :global(label.bx--file-browse-btn):hover {
+    outline: 0;
+    text-decoration: none;
+    align-items: center;
+  }
+  :global(div.bx--file__drop-container) {
+    text-align: center;
+    display: block;
+    border-radius: 12px;
+    transition: 300ms cubic-bezier(0.2, 0, 0.38, 0.9);
+    border: 1px #8d8d8d;
+    border-style: dashed;
+  }
+  :global(div.bx--file__drop-container):hover {
+    background-color: lavender;
+  }
+  :global(div.bx--grid) {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  :global(div.bx--col) {
+    max-width: 50%;
+    overflow: auto;
+  }
+</style>
